@@ -2,7 +2,7 @@ CM17.pm
 Changes
 MANIFEST
 Makefile.PL
-test.pl
-eg_cm17.plx
+t/test1.t
+eg/eg_cm17.plx
 README
 README.txt

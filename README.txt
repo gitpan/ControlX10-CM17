@@ -1,5 +1,5 @@
 ControlX10::CM17
-VERSION=0.05, 29 September 1999
+VERSION=0.07, 30 January 2000
 
 Hello home automators:
 
@@ -28,8 +28,8 @@ FILES:
     README.txt		- this file for DOS
     CM17.pm		- the reason you're reading this
 
-    test.pl		- RUN ME FIRST, basic tests
-    eg_cm17.plx		- simple On/Off/Dim_Lamp demo
+    t/test1.t		- RUN ME FIRST, basic tests
+    eg/eg_cm17.plx	- simple On/Off/Dim_Lamp demo
 
 OPERATION:
 
@@ -63,16 +63,14 @@ and follows a similar sequence.
 	perl test.pl
 	perl install.pl
 
-Both sequences create install files and directories. The test will
-default to "COM1" on Win32 and "/dev/ttyS0" on linux. You can either
-edit "test.pl" or run the test as 'perl test.pl PORT' and specify an
-alternate port to use. The 'perl test.pl PORT' form works on both OS
-types.
+Both sequences create install files and directories. The test emulates
+a CM17 - it is not necessary to select a port or connect the hardware.
 
 The "eg_cm17.plx" demo is a cross-platform version of a demo previously
-post and included with MisterHouse. It expects an X10 appliance switch
-at address A1 and a lamp at address A2. It uses the same port defaults
-and also permits specifying it with 'perl eg_cm17.plx PORT'.
+posted and included with MisterHouse. It expects an X10 appliance switch
+at address A1 and a lamp at address A2. It uses the port defaults "COM1"
+on Win32 and "/dev/ttyS0" on linux. You can either edit the port choice
+or specify it with 'perl eg_cm17.plx PORT'.
 
 Watch for updates at:
 
@@ -82,6 +80,6 @@ or CPAN under authors/id/B/BB/BBIRTH or ControlX10::CM17
 
 CPAN packaging and module documentation by Bill Birthisel.
 
-Copyright (C) 1999, Bruce Winter. All rights reserved. This module is
+Copyright (C) 2000, Bruce Winter. All rights reserved. This module is
 free software; you can redistribute it and/or modify it under the same
 terms as Perl itself.

@@ -6,9 +6,9 @@ use vars qw($VERSION $DEBUG @ISA @EXPORT @EXPORT_OK);
 require Exporter;
 
 @ISA = qw(Exporter);
-@EXPORT= qw();
-@EXPORT_OK= qw( send_cm17 );
-$VERSION = '0.05';
+@EXPORT= qw( send_cm17 );
+@EXPORT_OK= qw();
+($VERSION) = q$Revision: 0.07 $ =~ /: (\S+)/; # Note: cvs version reset when we moved to sourceforge
 $DEBUG = 0;
 
 #-----------------------------------------------------------------------------
@@ -45,7 +45,7 @@ sub send {
     
     my ($house, $code) = $house_code =~ /(\S)(\S+)/;
 
-    if (defined $main::config_parms{debug}) {
+    if (exists $main::config_parms{debug}) {
         $DEBUG = ($main::config_parms{debug} eq 'X10') ? 1 : 0;
     }
     print "CM17: $serial_port house=$house code=$code\n" if $DEBUG;
@@ -55,6 +55,25 @@ sub send {
         print "CM17.pm error. Invalid house code: $house\n";
         return;
     }
+                                # Check for +-## brighten/dim commands (e.g. 7+5  F-95)
+                                # Looks like it takes 7 levels to go full bright/dim (14%).
+    if ($code =~ /(\S)([\+\-])(\d+)/) {
+        my $device= $1;
+        my $dir   = $2;
+        my $level = $3;
+	my $ok;
+        print "Running CM17 dim/bright loop: device=$device $dir=$dir level=$level\n" if $DEBUG;
+                                # The CM17 dim/bright has not device address, so we must first
+                                # address the device (need to make sure it is on anyway)
+        &send($serial_port, $house . $device . 'J');
+        my $code = ($dir eq '+') ? 'L' : 'M';
+        while ($level >= 0) {
+            $ok = &send($serial_port, $house . $code);
+            $level -= 14;
+        }
+        return $ok;
+    }
+
                                 # Check for #J/#K or L/M/O/N
     my $data2 = $table_dcodes{$code};
     $data2 = $table_dcodes{substr($code, 1)} unless $data2;
@@ -155,19 +174,33 @@ I<$operation> commands that act on individual units, there are some that
 apply to the entire I<$house> code or to previous commands.
 
 	$operation	FUNCTION
-	    L		Brighten Last Light Programmed 5%
-	    M		Dim Last Light Programmed 5%
+	    L		Brighten Last Light Programmed 14%
+	    M		Dim Last Light Programmed 14%
 	    N		All Lights Off
 	    O		All Lights On
 	    P		All Units Off
+
+Starting with Version 0.6, a series of Brighten or Dim Commands may be
+combined into a single I<$operation> by specifying a signed amount of
+change desired after the unit code. An "ON" command will be sent to
+select the unit followed by at least one Brighten/Dim. The value will
+round to the next larger magnitude if not a multiple of 14%.
 	
+  &ControlX10::CM17::send($serial_port, 'A3-10');
+      # outputs 'A3J','AM' - at least one dim
+
+  &ControlX10::CM17::send($serial_port, 'A3-42');
+      # outputs 'A3J','AM','AM','AM' - even multiple of 14
+
+  &ControlX10::CM17::send($serial_port, 'AF-45');
+      # outputs 'AFJ','AL','AL','AL','AL' - round up if remainer
+
 =head1 EXPORTS
 
-Nothing is exported by default. A B<send_cm17> subroutine can be exported
-on request. It is identical to C<&ControlX10::CM17::send()>, and
-accepts the same parameters.
+The B<send_cm17> method is exported by default. It is identical to
+C<&ControlX10::CM17::send()>, and accepts the same parameters.
 
-  use ControlX10::CM17 qw( send_cm17 0.05 );
+  use ControlX10::CM17;
   send_cm17($serial_port, 'A1J');
 
 =head1 AUTHORS
@@ -176,6 +209,23 @@ Bruce Winter  bruce@misterhouse.net  http://misterhouse.net
 
 CPAN packaging by Bill Birthisel wcbirthisel@alum.mit.edu
 http://members.aol.com/bbirthisel
+
+=head2 MAILING LISTS
+
+General information about the mailing lists is at:
+
+  http://lists.sourceforge.net/mailman/listinfo/misterhouse-users
+  http://lists.sourceforge.net/mailman/listinfo/misterhouse-announce
+
+To post to this list, send your email to:
+
+  misterhouse-users@lists.sourceforge.net
+
+If you ever want to unsubscribe or change your options (eg, switch to
+or from digest mode, change your password, etc.), visit your
+subscription page at:
+
+  http://lists.sourceforge.net/mailman/options/misterhouse-users/$user_id
 
 =head1 SEE ALSO
 
@@ -191,9 +241,9 @@ Win32::SerialPort and Device::SerialPort
 
 =head1 COPYRIGHT
 
-Copyright (C) 1999 Bruce Winter. All rights reserved.
+Copyright (C) 2000 Bruce Winter. All rights reserved.
 
 This module is free software; you can redistribute it and/or modify it
-under the same terms as Perl itself. 29 September 1999.
+under the same terms as Perl itself. 30 January 2000.
 
 =cut
